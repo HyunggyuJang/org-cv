@@ -62,7 +62,7 @@
     (:github "GITHUB" nil nil parse)
     (:linkedin "LINKEDIN" nil nil parse)
     (:with-email nil "email" t t)
-    (:latex-title-command nil nil "\\begin{fullwidth}\n\\makecvheader\n\\end{fullwidth}")
+    (:latex-title-command nil nil "\\makecvheader")
     )
   :translate-alist '((template . org-altacv-template)
                      (headline . org-altacv-headline)))
