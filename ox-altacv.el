@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2018 Free Software Foundation, Inc.
 
-;; Author: Oscar Najera <hi AT oscarnajera.com DOT com>
+;; Author: Oscar Najera <hi AT oscarnajera.com DOT com>, Hyunggyu Jang
 ;; Keywords: org, wp, tex
 
 ;; This file is not part of GNU Emacs.
@@ -25,7 +25,7 @@
 ;;; Commentary:
 ;;
 ;; This library implements a LaTeX altacv back-end, derived from the
-;; LaTeX one.
+;; LaTeX one, targeting https://www.overleaf.com/latex/examples/recreating-business-insiders-cv-of-marissa-mayer-using-altacv/gtqfpbwncfvp
 
 ;;; Code:
 (require 'cl-lib)
@@ -36,10 +36,9 @@
 (unless (assoc "altacv" org-latex-classes)
   (add-to-list 'org-latex-classes
                '("altacv"
-                 "\\documentclass{altacv}"
-                 ("\n\\section{%s}" . "\n\\section*{%s}")
-                 ("\\subsection{%s}" . "\\subsection*{%s}")
-                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
+                 "\\documentclass[10pt,a4paper,ragged2e,withhyper]{altacv}"
+                 ("\\cvsection{%s}" . "\\cvsection*{%s}")
+                 ("\\cvsubsection{%s}" . "\\cvsubsection*{%s}"))))
 
 
 ;;; User-Configurable Variables
@@ -60,7 +59,6 @@
     (:homepage "HOMEPAGE" nil nil parse)
     (:address "ADDRESS" nil nil newline)
     (:photo "PHOTO" nil nil parse)
-    (:gitlab "GITLAB" nil nil parse)
     (:github "GITHUB" nil nil parse)
     (:linkedin "LINKEDIN" nil nil parse)
     (:with-email nil "email" t t)
@@ -71,18 +69,38 @@
 
 (defun colorconf ()
   "puts color"
-  "% Change the colours if you want to
-\\definecolor{VividPurple}{HTML}{009900}
+  "% Change the page layout if you need to
+\\geometry{left=1.25cm,right=1.25cm,top=1.5cm,bottom=1.5cm,columnsep=1.2cm}
+
+% The paracol package lets you typeset columns of text in parallel
+\\usepackage{paracol}
+
+% Change the font if you want to, depending on whether
+% you're using pdflatex or xelatex/lualatex
+% WHEN COMPILING WITH XELATEX PLEASE USE
+% xelatex -shell-escape -output-driver=\"xdvipdfmx -z 0\" mmayer.tex
+\\ifxetexorluatex
+  % If using xelatex or lualatex:
+  \\setmainfont{Lato}
+\\else
+  % If using pdflatex:
+  \\usepackage[default]{lato}
+\\fi
+
+% Change the colours if you want to
+\\definecolor{VividPurple}{HTML}{3E0097}
 \\definecolor{SlateGrey}{HTML}{2E2E2E}
-\\definecolor{LightGrey}{HTML}{333333}
+\\definecolor{LightGrey}{HTML}{666666}
 \\colorlet{heading}{VividPurple}
+\\colorlet{headingrule}{VividPurple}
 \\colorlet{accent}{VividPurple}
 \\colorlet{emphasis}{SlateGrey}
 \\colorlet{body}{LightGrey}
-\\hypersetup{
- colorlinks=true,
- urlcolor=olive!50!black!30!green,
- }
+
+% Change the bullets for itemize and rating marker
+% for \cvskill if you want to
+\\renewcommand{\\cvItemMarker}{{\\small\\textbullet}}
+\\renewcommand{\\cvRatingMarker}{\\faCircle}
 ")
 ;;;; Template
 ;;
@@ -164,7 +182,6 @@ holding export options."
                                          (nth 1 social-network)
                                          command))))
                 '((:github "github")
-                  (:gitlab "gitlab")
                   (:linkedin "linkedin"))
                 "")
      "}\n"
@@ -179,13 +196,23 @@ holding export options."
               ((string-match "\\(?:[^%]\\|^\\)%s" command)
                (format command title))
               (t command))))
+     "%% Depending on your tastes, you may want to make fonts of itemize environments slightly smaller
+\\AtBeginEnvironment{itemize}{\\small}
+
+%% Set the left/right column width ratio to 6:4.
+\\columnratio{0.6}
+
+
+% Start a 2-column paracol. Both the left and right columns will automatically
+% break across pages if things get too long.
+\\begin{paracol}{2}\n\n"
      ;; Document's body.
      contents
      ;; Creator.
      (and (plist-get info :with-creator)
           (concat (plist-get info :creator) "\n"))
      ;; Document end.
-     "\\end{document}")))
+     "\\end{paracol}\n\n\\end{document}")))
 
 
 (defun org-altacv--format-cventry (headline contents info)
