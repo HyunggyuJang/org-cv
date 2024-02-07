@@ -37,7 +37,7 @@
   (add-to-list 'org-latex-classes
                '("altacv"
                  "\\documentclass[10pt,a4paper,ragged2e,withhyper]{altacv}"
-                 ("\\cvsection{%s}" . "\\cvsection*{%s}")
+                 ("\n\\cvsection{%s}" . "\n\\cvsection*{%s}")
                  ("\\cvsubsection{%s}" . "\\cvsubsection*{%s}"))))
 
 
